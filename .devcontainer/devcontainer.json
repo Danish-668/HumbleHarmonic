@@ -1,0 +1,13 @@
+{
+  "name": "ROS2 Humble with Gazebo",
+  "image": "osrf/ros:humble-desktop",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "runArgs": [
+    "--privileged",
+    "--net=host"
+  ],
+  "containerEnv": {
+    "DISPLAY": "${localEnv:DISPLAY}"
+  },
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y curl lsb-release gnupg && sudo curl https://packages.osrfoundation.org/gazebo.gpg --output /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg && echo 'deb [arch='$(dpkg --print-architecture)' signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] https://packages.osrfoundation.org/gazebo/ubuntu-stable '$(lsb_release -cs)' main' | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null && sudo apt-get update && sudo apt-get install -y gz-harmonic ros-humble-ros-gz python3-colcon-common-extensions"
+}
