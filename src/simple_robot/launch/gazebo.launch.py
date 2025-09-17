@@ -49,8 +49,20 @@ def generate_launch_description():
         output='screen'
     )
 
+    # Bridge for cmd_vel using ros_gz_bridge
+    bridge_cmd_vel = Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        arguments=[
+            '/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist',
+            '/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry'
+        ],
+        output='screen'
+    )
+
     return LaunchDescription([
         gazebo,
         robot_state_publisher,
-        spawn_entity
+        spawn_entity,
+        bridge_cmd_vel
     ])
