@@ -1,0 +1,121 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 100  # Hz
+    use_sim_time: true
+
+    # Joint State Broadcaster
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    # Mobile base controller (differential drive)
+    mobile_base_controller:
+      type: diff_drive_controller/DiffDriveController
+
+    # Arm controller (joint trajectory)
+    arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    # Gripper controller
+    gripper_controller:
+      type: position_controllers/GripperActionController
+
+# Mobile Base Controller Configuration
+mobile_base_controller:
+  ros__parameters:
+    use_stamped_vel: false
+    left_wheel_names: ["left_wheel_joint"]
+    right_wheel_names: ["right_wheel_joint"]
+
+    # Wheel parameters
+    wheel_separation: 0.45
+    wheel_radius: 0.1
+
+    # Odometry
+    publish_rate: 50.0  # Hz
+    odom_frame_id: odom
+    base_frame_id: base_link
+    enable_odom_tf: true
+
+    # Velocity and acceleration limits
+    linear:
+      x:
+        has_velocity_limits: true
+        has_acceleration_limits: true
+        max_velocity: 1.0  # m/s
+        max_acceleration: 0.5  # m/s^2
+        has_jerk_limits: false
+    angular:
+      z:
+        has_velocity_limits: true
+        has_acceleration_limits: true
+        max_velocity: 2.0  # rad/s
+        max_acceleration: 1.0  # rad/s^2
+        has_jerk_limits: false
+
+# Arm Controller Configuration
+arm_controller:
+  ros__parameters:
+    joints:
+      - shoulder_pan_joint
+      - shoulder_lift_joint
+      - elbow_joint
+      - wrist_joint
+
+    command_interfaces:
+      - position
+
+    state_interfaces:
+      - position
+      - velocity
+
+    # PID gains for each joint
+    gains:
+      shoulder_pan_joint:
+        p: 100.0
+        i: 0.01
+        d: 10.0
+      shoulder_lift_joint:
+        p: 100.0
+        i: 0.01
+        d: 10.0
+      elbow_joint:
+        p: 100.0
+        i: 0.01
+        d: 10.0
+      wrist_joint:
+        p: 50.0
+        i: 0.01
+        d: 5.0
+
+    # State publish rate
+    state_publish_rate: 50.0  # Hz
+    action_monitor_rate: 20.0  # Hz
+
+    # Allow partial joints goals
+    allow_partial_joints_goal: false
+    allow_integration_in_goal_trajectories: true
+    allow_nonzero_velocity_at_trajectory_end: false
+
+    # Constraints
+    constraints:
+      stopped_velocity_tolerance: 0.01
+      goal_time: 0.0
+
+# Gripper Controller Configuration
+gripper_controller:
+  ros__parameters:
+    joint: left_finger_joint
+
+    # Action configuration
+    action_monitor_rate: 20.0  # Hz
+
+    # Goal tolerance
+    goal_tolerance: 0.001
+
+    # Max effort
+    max_effort: 10.0
+
+    # Allow stall
+    allow_stall: true
+    stall_velocity_threshold: 0.001
+    stall_timeout: 1.0
