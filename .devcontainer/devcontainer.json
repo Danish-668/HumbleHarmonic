@@ -2,7 +2,23 @@
     "name": "ROS 2 Humble + Gazebo Harmonic + gz_ros2_control",
     "build": {
         "dockerfile": "Dockerfile",
-        "context": "."
+        "context": ".",
+        "args": {
+            // Paths - WORKSPACE_PATH must match workspaceFolder and workspaceMount below
+            "WORKSPACE_PATH": "/workspace/humble_harmonic",
+            "GZ_ROS2_CONTROL_WS": "/opt/gz_ros2_control_ws",
+
+            // Optional packages
+            "INSTALL_DEV_TOOLS": "false",
+            "INSTALL_CLAUDE": "false",
+            "INSTALL_TELEOP": "true",
+            "INSTALL_TEST_TOOLS": "false",
+
+            // System configuration
+            "ENABLE_GPU_SUPPORT": "true",
+            "ROS_DOMAIN_ID": "0",
+            "ROS_LOCALHOST_ONLY": "0"
+        }
     },
 
     "workspaceFolder": "/workspace/humble_harmonic",
@@ -18,8 +34,6 @@
 
     "containerEnv": {
         "DISPLAY": "${localEnv:DISPLAY}",
-        "ROS_DOMAIN_ID": "0",
-        "ROS_LOCALHOST_ONLY": "0",
         "GZ_VERSION": "harmonic",
         "NVIDIA_VISIBLE_DEVICES": "all",
         "NVIDIA_DRIVER_CAPABILITIES": "all",
