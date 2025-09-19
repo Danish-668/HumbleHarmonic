@@ -1,0 +1,73 @@
+# syntax=docker/dockerfile:1.4
+FROM ros:humble-ros-base-jammy
+
+ARG GZ_ROS2_CONTROL_WS=/opt/gz_ros2_control_ws
+
+# Core dependencies
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    curl wget gnupg lsb-release ca-certificates \
+    build-essential cmake git \
+    python3-colcon-common-extensions \
+    python3-rosdep \
+    python3-vcstool \
+    && rm -rf /var/lib/apt/lists/*
+
+# Gazebo Harmonic
+RUN wget https://packages.osrfoundation.org/gazebo.gpg -O /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" > /etc/apt/sources.list.d/gazebo-stable.list && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    gz-harmonic \
+    && rm -rf /var/lib/apt/lists/*
+
+# ROS-Gazebo bridge and ROS 2 Control
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    ros-humble-ros-gzharmonic \
+    ros-humble-controller-interface \
+    ros-humble-controller-manager \
+    ros-humble-hardware-interface \
+    ros-humble-pluginlib \
+    ros-humble-ros2-control \
+    ros-humble-ros2-controllers \
+    ros-humble-control-msgs \
+    ros-humble-xacro \
+    ros-humble-robot-state-publisher \
+    && rm -rf /var/lib/apt/lists/*
+
+# gz_ros2_control dependencies
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    libgz-sim8-dev \
+    libgz-plugin2-dev \
+    libgz-transport13-dev \
+    libgz-msgs10-dev \
+    libgz-math7-dev \
+    libgz-cmake3-dev \
+    libgz-common5-dev \
+    libgz-tools2-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Build gz_ros2_control from source
+RUN mkdir -p ${GZ_ROS2_CONTROL_WS}/src && \
+    cd ${GZ_ROS2_CONTROL_WS}/src && \
+    git clone https://github.com/ros-controls/gz_ros2_control.git -b humble && \
+    cd ${GZ_ROS2_CONTROL_WS} && \
+    /bin/bash -c "source /opt/ros/humble/setup.bash && \
+    export GZ_VERSION=harmonic && \
+    rosdep init || true && \
+    rosdep update && \
+    rosdep install --from-paths src --ignore-src -r -y && \
+    colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release"
+
+# Environment setup
+RUN echo "source /opt/ros/humble/setup.bash" >> /etc/bash.bashrc && \
+    echo "export GZ_VERSION=harmonic" >> /etc/bash.bashrc && \
+    echo "source ${GZ_ROS2_CONTROL_WS}/install/setup.bash" >> /etc/bash.bashrc
+
+SHELL ["/bin/bash", "-c"]
+CMD ["/bin/bash"]
