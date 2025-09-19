@@ -18,7 +18,8 @@
     "containerEnv": {
         "DISPLAY": "${localEnv:DISPLAY}",
         "ROS_DOMAIN_ID": "0",
-        "ROS_LOCALHOST_ONLY": "0"
+        "ROS_LOCALHOST_ONLY": "0",
+        "GZ_VERSION": "harmonic"
     },
 
     "mounts": [
@@ -27,7 +28,7 @@
         "source=claude-config,target=/root/.config/claude,type=volume"
     ],
 
-    "postCreateCommand": "sudo apt-get update && sudo apt-get install -y git vim nano && echo 'export DISPLAY=${DISPLAY:-:0}' >> ~/.bashrc && echo 'export QT_X11_NO_MITSHM=1' >> ~/.bashrc",
+    "postCreateCommand": "sudo apt-get update && echo 'DevContainer setup complete - ROS2 Humble + Gazebo Harmonic + gz_ros2_control ready!'",
 
     "postStartCommand": "touch ~/.Xauthority && xhost +local:root 2>/dev/null || true",
 

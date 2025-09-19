@@ -44,6 +44,16 @@ RUN apt-get update && apt-get install -y \
     gz-harmonic \
     && rm -rf /var/lib/apt/lists/*
 
+# Remove any conflicting ros-gz packages first
+RUN apt-get update && apt-get remove -y \
+    ros-humble-ros-gz* \
+    || true
+
+# Install ROS-Gazebo Harmonic integration packages (official approach)
+RUN apt-get update && apt-get install -y \
+    ros-humble-ros-gzharmonic \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install ROS 2 packages needed for gz_ros2_control
 RUN apt-get update && apt-get install -y \
     ros-humble-control-msgs \
@@ -60,10 +70,19 @@ RUN apt-get update && apt-get install -y \
     ros-humble-robot-state-publisher \
     ros-humble-rviz2 \
     ros-humble-teleop-twist-keyboard \
-    ros-humble-ros-gz-bridge \
-    ros-humble-ros-gz-sim \
-    ros-humble-ros-gz-image \
     && rm -rf /var/lib/apt/lists/*
+
+# Create gz_ros2_control workspace and clone source (following official docs)
+RUN mkdir -p /opt/gz_ros2_control_ws/src && \
+    cd /opt/gz_ros2_control_ws/src && \
+    git clone https://github.com/ros-controls/gz_ros2_control.git -b humble
+
+# Build gz_ros2_control from source
+RUN /bin/bash -c "cd /opt/gz_ros2_control_ws && \
+    source /opt/ros/humble/setup.bash && \
+    export GZ_VERSION=harmonic && \
+    rosdep install --from-paths src --ignore-src -r -y && \
+    colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release"
 
 # Install Gazebo development libraries needed for gz_ros2_control
 RUN apt-get update && apt-get install -y \
@@ -99,17 +118,9 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
 RUN npm install -g @anthropic-ai/claude-code && \
     echo "Claude Code installed successfully"
 
-# Create workspace directories for gz_ros2_control
-RUN mkdir -p /opt/gz_ros2_control_ws/src
-
-# Clone and build gz_ros2_control from source (as per official docs)
-WORKDIR /opt/gz_ros2_control_ws/src
-RUN git clone https://github.com/ros-controls/gz_ros2_control.git -b humble
-
-WORKDIR /opt/gz_ros2_control_ws
-# Build gz_ros2_control
-RUN /bin/bash -c "source /opt/ros/humble/setup.bash && \
-    colcon build --symlink-install --cmake-args -DBUILD_TESTING=OFF"
+# Install rosdep rules (required for Gazebo Harmonic packages)
+RUN rosdep init || echo "rosdep already initialized" && \
+    rosdep update --rosdistro humble
 
 # Create main workspace directory
 RUN mkdir -p /workspace/humble_harmonic
@@ -124,12 +135,11 @@ RUN echo "# Claude CLI Path" >> ~/.bashrc && \
     echo "# Gazebo Harmonic" >> ~/.bashrc && \
     echo "export GZ_VERSION=harmonic" >> ~/.bashrc && \
     echo "" >> ~/.bashrc && \
-    echo "# gz_ros2_control" >> ~/.bashrc && \
+    echo "# gz_ros2_control workspace (built from source)" >> ~/.bashrc && \
     echo "source /opt/gz_ros2_control_ws/install/setup.bash" >> ~/.bashrc && \
     echo "" >> ~/.bashrc && \
     echo "# Workspace paths" >> ~/.bashrc && \
-    echo "export GZ_SIM_RESOURCE_PATH=/workspace/humble_harmonic/install/share:/workspace/humble_harmonic/src:\$GZ_SIM_RESOURCE_PATH" >> ~/.bashrc && \
-    echo "export GZ_SIM_SYSTEM_PLUGIN_PATH=/opt/gz_ros2_control_ws/install/gz_ros2_control/lib:\$GZ_SIM_SYSTEM_PLUGIN_PATH" >> ~/.bashrc && \
+    echo "export GZ_SIM_RESOURCE_PATH=/opt/gz_ros2_control_ws/install/share/gz_ros2_control:/workspace/humble_harmonic/install/share:/workspace/humble_harmonic/src:\$GZ_SIM_RESOURCE_PATH" >> ~/.bashrc && \
     echo "" >> ~/.bashrc && \
     echo "# Source local workspace if it exists" >> ~/.bashrc && \
     echo "if [ -f /workspace/humble_harmonic/install/setup.bash ]; then" >> ~/.bashrc && \
