@@ -1,9 +1,9 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, Command
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, Command
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
@@ -18,10 +18,19 @@ def generate_launch_description():
     with open(urdf_file, 'r') as infp:
         robot_desc = infp.read()
 
-    # Launch Gazebo Harmonic directly
-    gazebo = ExecuteProcess(
-        cmd=['gz', 'sim', '-r', '-v4', world_file],
-        output='screen'
+    # Launch Gazebo Harmonic with the world file
+    gazebo = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            PathJoinSubstitution([
+                FindPackageShare('ros_gz_sim'),
+                'launch',
+                'gz_sim.launch.py'
+            ])
+        ]),
+        launch_arguments={
+            'gz_args': f'-r -v4 {world_file}',
+            'on_exit_shutdown': 'true'
+        }.items()
     )
 
     # Robot state publisher
@@ -36,33 +45,58 @@ def generate_launch_description():
         }]
     )
 
-    # Spawn entity using gz service
-    spawn_entity = ExecuteProcess(
-        cmd=[
-            'gz', 'service',
-            '-s', '/world/simple_world/create',
-            '--reqtype', 'gz.msgs.EntityFactory',
-            '--reptype', 'gz.msgs.Boolean',
-            '--timeout', '5000',
-            '--req', f'sdf_filename: "{urdf_file}", name: "simple_robot", pose: {{position: {{x: 0, y: 0, z: 0.2}}}}'
+    # Joint state publisher
+    joint_state_publisher = Node(
+        package='joint_state_publisher',
+        executable='joint_state_publisher',
+        name='joint_state_publisher',
+        parameters=[{
+            'use_sim_time': True
+        }]
+    )
+
+    # Spawn robot in Gazebo
+    spawn_entity = Node(
+        package='ros_gz_sim',
+        executable='create',
+        arguments=[
+            '-name', 'simple_robot',
+            '-string', robot_desc,
+            '-x', '0',
+            '-y', '0',
+            '-z', '0.2',
+            '-allow_renaming', 'false'
         ],
         output='screen'
     )
 
-    # Bridge for cmd_vel using ros_gz_bridge
-    bridge_cmd_vel = Node(
+    # Bridge for various topics
+    bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
         arguments=[
             '/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist',
-            '/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry'
+            '/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry',
+            '/tf@tf2_msgs/msg/TFMessage@gz.msgs.Pose_V',
+            '/clock@rosgraph_msgs/msg/Clock@gz.msgs.Clock',
+            '/joint_states@sensor_msgs/msg/JointState@gz.msgs.Model'
         ],
-        output='screen'
+        output='screen',
+        parameters=[{
+            'use_sim_time': True
+        }]
+    )
+
+    # Delayed spawn to ensure Gazebo is ready
+    delayed_spawn = TimerAction(
+        period=2.0,
+        actions=[spawn_entity]
     )
 
     return LaunchDescription([
         gazebo,
         robot_state_publisher,
-        spawn_entity,
-        bridge_cmd_vel
+        joint_state_publisher,
+        bridge,
+        delayed_spawn
     ])

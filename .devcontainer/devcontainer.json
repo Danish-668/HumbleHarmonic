@@ -1,13 +1,35 @@
 {
-  "name": "ROS2 Humble with Gazebo",
-  "image": "osrf/ros:humble-desktop",
-  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-  "runArgs": [
-    "--privileged",
-    "--net=host"
-  ],
-  "containerEnv": {
-    "DISPLAY": "${localEnv:DISPLAY}"
-  },
-  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y curl lsb-release gnupg && sudo curl https://packages.osrfoundation.org/gazebo.gpg --output /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg && echo 'deb [arch='$(dpkg --print-architecture)' signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] https://packages.osrfoundation.org/gazebo/ubuntu-stable '$(lsb_release -cs)' main' | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null && sudo apt-get update && sudo apt-get install -y gz-harmonic ros-humble-ros-gz python3-colcon-common-extensions && echo 'source /opt/ros/humble/setup.bash' >> ~/.bashrc"
+    "name": "ROS 2 Humble Custom",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": "."
+    },
+
+    "workspaceFolder": "/workspace/humble_harmonic",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/humble_harmonic,type=bind",
+
+    "runArgs": [
+        "--network=host",
+        "--privileged",
+        "--ipc=host",
+        "--pid=host"
+    ],
+
+    "containerEnv": {
+        "DISPLAY": "${localEnv:DISPLAY}",
+        "ROS_DOMAIN_ID": "0",
+        "ROS_LOCALHOST_ONLY": "0"
+    },
+
+    "mounts": [
+        "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached",
+        "source=/dev/dri,target=/dev/dri,type=bind",
+        "source=claude-config,target=/root/.config/claude,type=volume"
+    ],
+
+    "postCreateCommand": "sudo apt-get update && sudo apt-get install -y git vim nano && echo 'export DISPLAY=${DISPLAY:-:0}' >> ~/.bashrc && echo 'export QT_X11_NO_MITSHM=1' >> ~/.bashrc",
+
+    "postStartCommand": "touch ~/.Xauthority && xhost +local:root 2>/dev/null || true",
+
+    "remoteUser": "root"
 }
