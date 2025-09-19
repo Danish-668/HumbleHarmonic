@@ -103,9 +103,53 @@ export DISPLAY=:0
 2. Enable "Allow connections from network clients" in XQuartz settings
 3. Run: `xhost +localhost`
 
-### GPU Support
-- Comment out `"--gpus", "all"` in devcontainer.json if no NVIDIA GPU
-- For AMD/Intel GPUs, the software renderer will be used automatically
+### NVIDIA GPU Support
+
+#### Prerequisites
+1. NVIDIA GPU with driver version 470+ installed on host
+2. NVIDIA Container Toolkit installed
+3. Docker configured with NVIDIA runtime
+
+#### Quick Setup
+```bash
+# Run the setup script to verify GPU prerequisites
+./setup_nvidia_gpu.sh
+
+# Rebuild container with GPU support
+# VS Code: Ctrl+Shift+P → "Dev Containers: Rebuild Container"
+```
+
+#### Manual Setup
+1. Install NVIDIA drivers on host system
+2. Install NVIDIA Container Toolkit:
+```bash
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
+sudo systemctl restart docker
+```
+
+#### Verify GPU in Container
+```bash
+# Check GPU availability
+nvidia-smi
+
+# Check OpenGL renderer (should show NVIDIA)
+glxinfo | grep "OpenGL renderer"
+
+# Test Gazebo with GPU
+gz sim empty.sdf
+```
+
+#### Disable GPU (for systems without NVIDIA GPU)
+Comment out these lines in `.devcontainer/devcontainer.json`:
+```json
+// "--gpus=all",
+// "--runtime=nvidia",
+// "-e", "NVIDIA_VISIBLE_DEVICES=all",
+// "-e", "NVIDIA_DRIVER_CAPABILITIES=all"
+```
 
 ### Clean Stale Processes
 ```bash

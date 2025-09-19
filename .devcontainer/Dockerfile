@@ -33,6 +33,13 @@ RUN apt-get update && apt-get install -y \
     libqt6opengl6 \
     # Additional tools
     xterm \
+    # NVIDIA GPU support libraries
+    libglvnd0 \
+    libglvnd-dev \
+    libgl1 \
+    libglx0 \
+    libegl1 \
+    libgles2 \
     && rm -rf /var/lib/apt/lists/*
 
 # Add Gazebo packages repository (following official docs)
