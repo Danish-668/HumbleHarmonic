@@ -4,77 +4,20 @@ FROM ${BASE_IMAGE}
 
 ARG WORKSPACE_PATH=/workspace/humble_harmonic
 ARG GZ_ROS2_CONTROL_WS=/opt/gz_ros2_control_ws
-ARG INSTALL_DEV_TOOLS=false
 ARG INSTALL_CLAUDE=false
-ARG INSTALL_TELEOP=true
-ARG INSTALL_TEST_TOOLS=false
-ARG ENABLE_GPU_SUPPORT=true
 ARG ROS_DOMAIN_ID=0
 ARG ROS_LOCALHOST_ONLY=0
 
-# Additional development dependencies
+# Copy packages list
+COPY packages.txt /tmp/packages.txt
+
+# Install all packages from packages.txt
+# Simply comment/uncomment lines in packages.txt to control what gets installed
 RUN --mount=type=cache,target=/var/cache/apt \
     apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    python3-pip \
-    software-properties-common \
-    && rm -rf /var/lib/apt/lists/*
-
-# GPU Support Libraries (Optional)
-RUN --mount=type=cache,target=/var/cache/apt \
-    if [ "$ENABLE_GPU_SUPPORT" = "true" ]; then \
-    apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
-    libgl1-mesa-dri \
-    libglvnd0 \
-    libgl1 \
-    libglx0 \
-    libegl1 \
-    libgles2 \
-    && rm -rf /var/lib/apt/lists/*; \
-    fi
-
-# Development Tools (Optional)
-RUN --mount=type=cache,target=/var/cache/apt \
-    if [ "$INSTALL_DEV_TOOLS" = "true" ]; then \
-    apt-get update && apt-get install -y \
-    vim \
-    nano \
-    gdb \
-    valgrind \
-    htop \
-    net-tools \
-    iputils-ping \
-    && rm -rf /var/lib/apt/lists/*; \
-    fi
-
-# Additional ROS packages for development
-RUN --mount=type=cache,target=/var/cache/apt \
-    apt-get update && apt-get install -y \
-    ros-humble-rviz2 \
-    ros-humble-rqt \
-    ros-humble-rqt-common-plugins \
-    ros-humble-control-toolbox \
-    ros-humble-realtime-tools \
-    && rm -rf /var/lib/apt/lists/*
-
-# Teleop Tools (Optional)
-RUN --mount=type=cache,target=/var/cache/apt \
-    if [ "$INSTALL_TELEOP" = "true" ]; then \
-    apt-get update && apt-get install -y \
-    ros-humble-teleop-twist-keyboard \
-    ros-humble-teleop-twist-joy \
-    && rm -rf /var/lib/apt/lists/*; \
-    fi
-
-# Test Tools (Optional)
-RUN --mount=type=cache,target=/var/cache/apt \
-    if [ "$INSTALL_TEST_TOOLS" = "true" ]; then \
-    apt-get update && apt-get install -y \
-    ros-humble-joint-state-publisher-gui \
-    && pip3 install pytest pytest-cov && \
-    rm -rf /var/lib/apt/lists/*; \
-    fi
+    DEBIAN_FRONTEND=noninteractive grep -v '^#' /tmp/packages.txt | grep -v '^$' | \
+    xargs -r apt-get install -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* /tmp/packages.txt
 
 # Claude AI Assistant (Optional)
 RUN --mount=type=cache,target=/var/cache/apt \
@@ -108,11 +51,7 @@ RUN echo "" >> ~/.bashrc && \
     echo "export QT_QPA_PLATFORM=xcb" >> ~/.bashrc && \
     echo "" >> ~/.bashrc && \
     echo "# Build configuration (for reference)" >> ~/.bashrc && \
-    echo "export ENABLE_GPU_SUPPORT=${ENABLE_GPU_SUPPORT}" >> ~/.bashrc && \
-    echo "export INSTALL_DEV_TOOLS=${INSTALL_DEV_TOOLS}" >> ~/.bashrc && \
-    echo "export INSTALL_CLAUDE=${INSTALL_CLAUDE}" >> ~/.bashrc && \
-    echo "export INSTALL_TELEOP=${INSTALL_TELEOP}" >> ~/.bashrc && \
-    echo "export INSTALL_TEST_TOOLS=${INSTALL_TEST_TOOLS}" >> ~/.bashrc
+    echo "export INSTALL_CLAUDE=${INSTALL_CLAUDE}" >> ~/.bashrc
 
 WORKDIR ${WORKSPACE_PATH}
 

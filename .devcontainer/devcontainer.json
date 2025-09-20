@@ -7,11 +7,7 @@
             "BASE_IMAGE": "ros-humble-gz-base:latest",
             "WORKSPACE_PATH": "/workspace/humble_harmonic",
             "GZ_ROS2_CONTROL_WS": "/opt/gz_ros2_control_ws",
-            "INSTALL_DEV_TOOLS": "false",
             "INSTALL_CLAUDE": "false",
-            "INSTALL_TELEOP": "true",
-            "INSTALL_TEST_TOOLS": "false",
-            "ENABLE_GPU_SUPPORT": "true",
             "ROS_DOMAIN_ID": "0",
             "ROS_LOCALHOST_ONLY": "0"
         }

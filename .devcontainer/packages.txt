@@ -1,0 +1,79 @@
+# ROS 2 Development Packages
+# Add or remove packages as needed - one per line
+# Lines starting with # are ignored
+
+# ========================================
+# ALWAYS INSTALLED
+# ========================================
+
+# Visualization and GUI tools
+ros-humble-rviz2
+ros-humble-rqt
+ros-humble-rqt-common-plugins
+ros-humble-plotjuggler-ros
+
+# Control and real-time tools
+ros-humble-control-toolbox
+ros-humble-realtime-tools
+
+# TF and transforms
+ros-humble-tf2-tools
+ros-humble-tf-transformations
+
+# Robot state and joints
+ros-humble-joint-state-publisher
+ros-humble-robot-localization
+
+# Diagnostics
+ros-humble-diagnostic-updater
+
+# Navigation and SLAM
+ros-humble-navigation2
+ros-humble-nav2-bringup
+ros-humble-slam-toolbox
+
+# Motion planning
+ros-humble-moveit
+
+# ========================================
+# OPTIONAL - UNCOMMENT AS NEEDED
+# ========================================
+
+# Teleop packages
+ros-humble-teleop-twist-keyboard
+ros-humble-teleop-twist-joy
+
+# Test tools
+ros-humble-joint-state-publisher-gui
+
+# Perception and vision
+# ros-humble-pcl-ros
+# ros-humble-perception-pcl
+# ros-humble-laser-geometry
+# ros-humble-image-pipeline
+# ros-humble-vision-opencv
+# ros-humble-image-transport-plugins
+# ros-humble-compressed-image-transport
+# ros-humble-depth-image-proc
+# ros-humble-stereo-image-proc
+
+# Additional diagnostics
+# ros-humble-diagnostic-aggregator
+# ros-humble-diagnostic-analysis
+# ros-humble-diagnostic-common-diagnostics
+
+# Development tools (uncomment if needed)
+vim
+nano
+# gdb
+# valgrind
+# htop
+# net-tools
+# iputils-ping
+
+# Additional system packages
+software-properties-common
+
+# Python packages (install via pip in Dockerfile)
+# pytest
+# pytest-cov
